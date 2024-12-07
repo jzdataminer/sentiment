@@ -1,25 +1,55 @@
 import streamlit as st
-import requests
+from textblob import TextBlob
 
-# Streamlit UI
+# Streamlit app
 st.title("Sentiment Analysis App")
 
-# User input
-user_input = st.text_area("Enter your text for sentiment analysis:")
+# Check if the app is being accessed as an API
+api_call = st.experimental_get_query_params().get('api', [None])[0]
 
-# Flask API URL
-API_URL = "http://localhost:5000/predict"
+# Function to analyze sentiment
+def get_sentiment_score(text):
+    blob = TextBlob(text)
+    sentiment_score = blob.sentiment.polarity
 
-if st.button("Predict"):
-    if user_input.strip():
-        # Sending request to Flask API
-        response = requests.post(API_URL, json={"text": user_input})
-        
-        if response.status_code == 200:
-            result = response.json()
-            st.write(f"**Sentiment Score:** {result['score']}")
-            st.write(f"**Overall Sentiment:** {result['sentiment']}")
-        else:
-            st.error(f"Error: {response.json()['error']}")
+    if sentiment_score > 0:
+        sentiment = "Positive"
+    elif sentiment_score < 0:
+        sentiment = "Negative"
     else:
-        st.warning("Please enter some text for analysis.")
+        sentiment = "Neutral"
+
+    return sentiment_score, sentiment
+
+if api_call == "true":
+    st.write("API mode enabled")
+    # Extract JSON input
+    input_json = st.text_area("Paste JSON input here:")
+    if st.button("Predict from API"):
+        try:
+            input_data = json.loads(input_json)
+            text = input_data["text"]
+            score, sentiment = get_sentiment_score(text)
+            st.json({
+                "sentiment_score": round(score, 2),
+                "sentiment": sentiment
+            })
+        except Exception as e:
+            st.error(f"Error parsing input: {e}")
+else:
+    st.write("Interactive mode enabled. Enter text below:")
+
+    # User input section
+    user_input = st.text_area("Enter your text for sentiment analysis:")
+
+    # Button to make a prediction
+    if st.button("Predict"):
+        if user_input.strip():
+            # Get sentiment score and sentiment
+            score, sentiment = get_sentiment_score(user_input)
+
+            # Display results
+            st.write(f"**Sentiment Score:** {round(score, 2)}")
+            st.write(f"**Overall Sentiment:** {sentiment}")
+        else:
+            st.warning("Please enter some text for analysis.")
