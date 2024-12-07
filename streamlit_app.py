@@ -2,7 +2,7 @@ import streamlit as st
 from textblob import TextBlob
 
 # Streamlit app
-st.title("Sentiment Analysis App")
+st.title("Sentiment Analysis App - Jay on 20241207, The day of Infamy")
 
 # Check if the app is being accessed as an API
 api_call = st.experimental_get_query_params().get('api', [None])[0]
